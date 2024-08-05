@@ -5,7 +5,8 @@ import lombok.Data;
 
 @Data
 @Builder
-public class Sucursal {
+public class FranquiciaSucursal {
+    private String id;
+    private String franquiciaId;
     private String sucursalId;
-    private String nombre;
 }

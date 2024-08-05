@@ -1,12 +1,10 @@
 package com.nequi.api.nequiapi.domain.model;
 
+import lombok.Builder;
 import lombok.Data;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
-
-import java.util.UUID;
 
 @Data
+@Builder
 public class Producto {
     private String productoId;
     private String nombre;

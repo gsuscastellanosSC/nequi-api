@@ -1,7 +1,9 @@
 package com.nequi.api.nequiapi.infrastructure.persistence;
 
 import com.nequi.api.nequiapi.domain.model.Franquicia;
+import com.nequi.api.nequiapi.domain.model.Sucursal;
 import com.nequi.api.nequiapi.domain.repository.FranquiciaRepository;
+import com.nequi.api.nequiapi.domain.repository.SucursalRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -15,40 +17,40 @@ import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Repository
-public class DynamoDBFranquiciaRepository implements FranquiciaRepository {
+public class DynamoDBSucursalRepository implements SucursalRepository {
 
     @Autowired
     private DynamoDbAsyncClient dynamoDbAsyncClient;
 
     @Override
-    public Mono<Franquicia> save(Franquicia franquicia) {
-        log.info("Guardando franquicia: {}", franquicia);
+    public Mono<Sucursal> save(Sucursal sucursal) {
+        log.info("Guardando Sucursal: {}", sucursal);
 
         Map<String, AttributeValue> itemMap = new HashMap<>();
-        itemMap.put("franquiciaId", AttributeValue.builder().s(franquicia.getFranquiciaId()).build());
-        itemMap.put("nombre", AttributeValue.builder().s(franquicia.getNombre()).build());
+        itemMap.put("sucursalId", AttributeValue.builder().s(sucursal.getSucursalId()).build());
+        itemMap.put("nombre", AttributeValue.builder().s(sucursal.getNombre()).build());
 
 
         PutItemRequest putItemRequest = PutItemRequest.builder()
-                .tableName("Franquicias")
+                .tableName("Sucursales")
                 .item(itemMap)
                 .build();
 
         CompletableFuture<PutItemResponse> future = dynamoDbAsyncClient.putItem(putItemRequest);
         return Mono.fromFuture(future)
                 .doOnError(e -> log.error("Error al guardar en DynamoDB: {}", e.getMessage(), e))
-                .thenReturn(franquicia);
+                .thenReturn(sucursal);
     }
 
     @Override
-    public Mono<Franquicia> findById(String franquiciaId) {
-        log.info("Obteniendo franquicia con franquiciaId: {}", franquiciaId);
+    public Mono<Sucursal> findById(String sucursalId) {
+        log.info("Obteniendo Sucursal con franquiciaId: {}", sucursalId);
 
         Map<String, AttributeValue> key = new HashMap<>();
-        key.put("franquiciaId", AttributeValue.builder().s(franquiciaId).build());
+        key.put("sucursalId", AttributeValue.builder().s(sucursalId).build());
 
         GetItemRequest getItemRequest = GetItemRequest.builder()
-                .tableName("Franquicias")
+                .tableName("Sucursales")
                 .key(key)
                 .build();
 
@@ -56,25 +58,21 @@ public class DynamoDBFranquiciaRepository implements FranquiciaRepository {
                 .doOnError(e -> log.error("Error al obtener item de DynamoDB: {}", e.getMessage(), e))
                 .map(GetItemResponse::item)
                 .filter(item -> item != null && !item.isEmpty())
-                .map(item -> {
-                    Franquicia franquicia = new Franquicia();
-                    franquicia.setFranquiciaId(item.get("franquiciaId").s());
-                    franquicia.setNombre(item.get("nombre").s());
-                    // Obtener y establecer sucursales y productos anidados según sea necesario
-                    return franquicia;
-                });
+                .map(item -> Sucursal.builder()
+                        .sucursalId(item.get("sucursalId").s())
+                        .nombre(item.get("nombre").s())
+                        .build());
     }
 
     @Override
-    public Mono<Void> deleteById(String franquiciaId) {
-        log.info("Eliminando franquicia con franquiciaId: {}", franquiciaId);
+    public Mono<Void> deleteById(String sucursalId) {
+        log.info("Eliminando sucursal con franquiciaId: {}", sucursalId);
 
         Map<String, AttributeValue> key = new HashMap<>();
-        key.put("franquiciaId", AttributeValue.builder().s(franquiciaId).build());
-        key.put("entityId", AttributeValue.builder().s("FRANQ#" + franquiciaId).build());
+        key.put("sucursalId", AttributeValue.builder().s(sucursalId).build());
 
         DeleteItemRequest deleteItemRequest = DeleteItemRequest.builder()
-                .tableName("Franquicias")
+                .tableName("Sucursales")
                 .key(key)
                 .build();
 

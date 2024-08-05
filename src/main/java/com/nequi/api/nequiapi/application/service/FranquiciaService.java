@@ -1,38 +1,43 @@
 package com.nequi.api.nequiapi.application.service;
 
 import com.nequi.api.nequiapi.domain.model.Franquicia;
+import com.nequi.api.nequiapi.domain.model.FranquiciaSucursales;
+import com.nequi.api.nequiapi.domain.model.Sucursal;
 import com.nequi.api.nequiapi.domain.repository.FranquiciaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.nequi.api.nequiapi.domain.repository.SucursalRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class FranquiciaService {
 
-    @Autowired
-    private FranquiciaRepository franquiciaRepository;
-    public Mono<Franquicia> addFranquicia(Franquicia franquicia) {
-        String franquiciaId = "FRANQ#" + UUID.randomUUID();
-        franquicia.setFranquiciaId(franquiciaId);
+    private final FranquiciaRepository franquiciaRepository;
 
-        franquicia.getSucursales().forEach(sucursal -> {
-            String sucursalId = "SUC#" + UUID.randomUUID();
-            sucursal.setSucursalId(sucursalId);
-            sucursal.getProductos().forEach(producto -> {
-                String productoId = "PROD#" + UUID.randomUUID();
-                producto.setProductoId(productoId);
-            });
-        });
-        return franquiciaRepository.save(franquicia);
+    public Mono<Franquicia> addFranquicia(Franquicia franquicia) {
+        String franquiciaId = String.valueOf(UUID.randomUUID());
+        franquicia.setFranquiciaId(franquiciaId);
+        log.info("Agregando franquicia con ID: {}", franquiciaId);
+        return franquiciaRepository.save(franquicia)
+                .doOnSuccess(savedFranquicia -> log.info("Franquicia guardada: {}", savedFranquicia))
+                .doOnError(e -> log.error("Error al guardar franquicia: {}", e.getMessage(), e));
     }
 
     public Mono<Franquicia> getFranquiciaById(String id) {
-        return franquiciaRepository.findById(id);
-    }
-
-    public Mono<Void> deleteFranquicia(String id) {
-        return franquiciaRepository.deleteById(id);
+        log.info("Buscando franquicia con ID: {}", id);
+        return franquiciaRepository.findById(id)
+                .doOnSuccess(franquicia -> {
+                    if (franquicia != null) {
+                        log.info("Franquicia encontrada: {}", franquicia);
+                    } else {
+                        log.warn("Franquicia con ID: {} no encontrada", id);
+                    }
+                })
+                .doOnError(e -> log.error("Error al buscar franquicia con ID: {}", id, e));
     }
 }
